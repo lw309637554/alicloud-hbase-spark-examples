@@ -42,12 +42,19 @@ import org.apache.spark.sql.execution.datasources.hbase.types.SHCDataTypeFactory
  * val people = sqlContext.read.format("hbase").load("people")
  */
 private[sql] class DefaultSource extends RelationProvider with CreatableRelationProvider {//with DataSourceRegister {
+//private[sql] class DefaultSource extends SchemaRelationProvider with CreatableRelationProvider {//with DataSourceRegister {
 
-  //override def shortName(): String = "hbase"
+//  override def shortName(): String = "hbase"
+
+//  override def createRelation(
+//      sqlContext: SQLContext,
+//      parameters: Map[String, String],schema: StructType): BaseRelation = {
+//    HBaseRelation(parameters, None)(sqlContext)
+//  }
 
   override def createRelation(
-      sqlContext: SQLContext,
-      parameters: Map[String, String]): BaseRelation = {
+                               sqlContext: SQLContext,
+                               parameters: Map[String, String]): BaseRelation = {
     HBaseRelation(parameters, None)(sqlContext)
   }
 
@@ -57,10 +64,12 @@ private[sql] class DefaultSource extends RelationProvider with CreatableRelation
     parameters: Map[String, String],
     data: DataFrame): BaseRelation = {
     val relation = HBaseRelation(parameters, Some(data.schema))(sqlContext)
-    relation.createTable()
+//    relation.createTable()
     relation.insert(data, false)
     relation
   }
+
+
 }
 
 case class HBaseRelation(
@@ -167,6 +176,7 @@ case class HBaseRelation(
    * @param overwrite Overwrite existing values
    */
   override def insert(data: DataFrame, overwrite: Boolean): Unit = {
+    this.createTable()
     hbaseConf.set(TableOutputFormat.OUTPUT_TABLE, catalog.name)
     val job = Job.getInstance(hbaseConf)
     job.setOutputFormatClass(classOf[TableOutputFormat[String]])
